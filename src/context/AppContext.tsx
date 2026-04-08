@@ -1,14 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Member, Payment, Attendance, Announcement, Advice, GalleryItem } from "../types";
-import {
-  initialMembers,
-  initialPayments,
-  initialAttendance,
-  initialAnnouncements,
-  initialAdvices,
-  initialGallery,
-} from "../data/mockData";
-import { storageAPI } from "../utils/storage";
+import { apiService } from "../services/api";
 
 interface AppSettings {
   registrationEnabled: boolean;
@@ -34,61 +26,75 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [members, setMembersState] = useState<Member[]>(() => 
-    storageAPI.members.get(initialMembers)
-  );
-  const [payments, setPaymentsState] = useState<Payment[]>(() => 
-    storageAPI.payments.get(initialPayments)
-  );
-  const [attendance, setAttendanceState] = useState<Attendance[]>(() => 
-    storageAPI.attendance.get(initialAttendance)
-  );
-  const [announcements, setAnnouncementsState] = useState<Announcement[]>(() => 
-    storageAPI.announcements.get(initialAnnouncements)
-  );
-  const [advices, setAdvicesState] = useState<Advice[]>(() => 
-    storageAPI.advices.get(initialAdvices)
-  );
-  const [gallery, setGalleryState] = useState<GalleryItem[]>(() => 
-    storageAPI.gallery.get(initialGallery)
-  );
-  const [settings, setSettingsState] = useState<AppSettings>(() =>
-    storageAPI.settings.get({ registrationEnabled: true })
-  );
+  const [members, setMembersState] = useState<Member[]>([]);
+  const [payments, setPaymentsState] = useState<Payment[]>([]);
+  const [attendance, setAttendanceState] = useState<Attendance[]>([]);
+  const [announcements, setAnnouncementsState] = useState<Announcement[]>([]);
+  const [advices, setAdvicesState] = useState<Advice[]>([]);
+  const [gallery, setGalleryState] = useState<GalleryItem[]>([]);
+  const [settings, setSettingsState] = useState<AppSettings>(() => ({
+    registrationEnabled: true
+  }));
+
+  // Load data from backend API on mount
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      // Load members from API
+      const membersData = await apiService.getMembers();
+      setMembersState(membersData);
+
+      // Load payments from API
+      const paymentsData = await apiService.getPayments();
+      setPaymentsState(paymentsData);
+
+      // Load attendance from API
+      const attendanceData = await apiService.getAttendance();
+      setAttendanceState(attendanceData);
+
+      // Load announcements from API
+      const announcementsData = await apiService.getAnnouncements();
+      setAnnouncementsState(announcementsData);
+
+      // Load recent announcements
+      const recentAdvices = await apiService.getRecentAnnouncements();
+      setAdvicesState(recentAdvices);
+
+      console.log(' Data loaded from backend API successfully');
+    } catch (error) {
+      console.error(' Error loading data from backend:', error);
+    }
+  };
 
   const setMembers = (newMembers: Member[]) => {
     setMembersState(newMembers);
-    storageAPI.members.save(newMembers);
   };
 
   const setPayments = (newPayments: Payment[]) => {
     setPaymentsState(newPayments);
-    storageAPI.payments.save(newPayments);
   };
 
   const setAttendance = (newAttendance: Attendance[]) => {
     setAttendanceState(newAttendance);
-    storageAPI.attendance.save(newAttendance);
   };
 
   const setAnnouncements = (newAnnouncements: Announcement[]) => {
     setAnnouncementsState(newAnnouncements);
-    storageAPI.announcements.save(newAnnouncements);
   };
 
   const setAdvices = (newAdvices: Advice[]) => {
     setAdvicesState(newAdvices);
-    storageAPI.advices.save(newAdvices);
   };
 
   const setGallery = (newGallery: GalleryItem[]) => {
     setGalleryState(newGallery);
-    storageAPI.gallery.save(newGallery);
   };
 
   const setSettings = (newSettings: AppSettings) => {
     setSettingsState(newSettings);
-    storageAPI.settings.save(newSettings);
   };
 
   return (
@@ -117,8 +123,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (!context) {
-    throw new Error("useAppContext must be used within AppProvider");
+  if (context === undefined) {
+    throw new Error("useAppContext must be used within an AppProvider");
   }
   return context;
 };
