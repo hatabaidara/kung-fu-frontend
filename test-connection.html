@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .pending { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend-Backend Connection Test</h1>
+    
+    <div class="test pending" id="health-test">
+        <h3>1. Backend Health Check</h3>
+        <button onclick="testHealth()">Test Health</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test pending" id="register-test">
+        <h3>2. Register Test User</h3>
+        <button onclick="testRegister()">Test Register</button>
+        <div id="register-result"></div>
+    </div>
+    
+    <div class="test pending" id="login-test">
+        <h3>3. Login Test User</h3>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="test pending" id="api-test">
+        <h3>4. API Endpoints Test</h3>
+        <button onclick="testAPI()">Test API</button>
+        <div id="api-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kung-fu-backend.onrender.com/api';
+        
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            const testDiv = document.getElementById('health-test');
+            
+            try {
+                resultDiv.innerHTML = '<p>⏳ Testing...</p>';
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testDiv.className = 'test success';
+                    resultDiv.innerHTML = `
+                        <p>✅ Success!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(`Status: ${response.status}`);
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                resultDiv.innerHTML = `
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testRegister() {
+            const resultDiv = document.getElementById('register-result');
+            const testDiv = document.getElementById('register-test');
+            
+            try {
+                resultDiv.innerHTML = '<p>⏳ Testing...</p>';
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'test',
+                        email: 'test@test.com',
+                        password: 'Test1234!'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testDiv.className = 'test success';
+                    resultDiv.innerHTML = `
+                        <p>✅ Registration successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(`Status: ${response.status} - ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                resultDiv.innerHTML = `
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            const testDiv = document.getElementById('login-test');
+            
+            try {
+                resultDiv.innerHTML = '<p>⏳ Testing...</p>';
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'test',
+                        password: 'Test1234!'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testDiv.className = 'test success';
+                    resultDiv.innerHTML = `
+                        <p>✅ Login successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    // Store token for future tests
+                    localStorage.setItem('testToken', data.token);
+                } else {
+                    throw new Error(`Status: ${response.status} - ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                resultDiv.innerHTML = `
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            const testDiv = document.getElementById('api-test');
+            const token = localStorage.getItem('testToken');
+            
+            try {
+                resultDiv.innerHTML = '<p>⏳ Testing...</p>';
+                const response = await fetch(`${API_BASE}/members`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testDiv.className = 'test success';
+                    resultDiv.innerHTML = `
+                        <p>✅ API access successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(`Status: ${response.status} - ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                resultDiv.innerHTML = `
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Auto-test health on load
+        window.onload = () => testHealth();
+    </script>
+</body>
+</html>

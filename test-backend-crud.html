@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend CRUD Routes</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            background: #fafafa;
+        }
+        .test-section h3 { 
+            margin-top: 0; 
+            color: #333;
+        }
+        .form { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 10px; 
+            margin: 15px 0;
+        }
+        .form input, .form select, .form textarea { 
+            width: 100%; 
+            padding: 8px; 
+            margin: 5px 0; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .form button { 
+            grid-column: 1 / -1;
+            padding: 12px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form button:hover { 
+            background: #0056b3; 
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .info { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb; 
+        }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            overflow-x: auto; 
+            font-size: 11px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+        .status-pending { background: #ffc107; }
+        .tabs { 
+            display: flex; 
+            border-bottom: 1px solid #ccc; 
+            margin-bottom: 20px;
+        }
+        .tab { 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            border: 1px solid #ccc; 
+            border-bottom: none; 
+            margin-right: 5px; 
+            background: #f8f9fa;
+        }
+        .tab.active { 
+            background: #007bff; 
+            color: white; 
+        }
+        .tab-content { 
+            display: none; 
+        }
+        .tab-content.active { 
+            display: block; 
+        }
+        .health-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Backend CRUD Routes</h1>
+        <p>Backend: <strong>https://kung-fu-backend.onrender.com</strong></p>
+        
+        <div id="health-status" class="health-status info">
+            <span class="status-indicator status-pending"></span>
+            Vérification du statut du backend...
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('auth')">Authentification</div>
+            <div class="tab" onclick="showTab('members')">Membres</div>
+            <div class="tab" onclick="showTab('payments')">Paiements</div>
+            <div class="tab" onclick="showTab('attendance')">Présence</div>
+            <div class="tab" onclick="showTab('announcements')">Annonces</div>
+        </div>
+        
+        <!-- Authentification -->
+        <div id="auth" class="tab-content active">
+            <div class="test-section">
+                <h3>Authentification (Fonctionnel)</h3>
+                <div class="form">
+                    <input type="text" id="auth-username" placeholder="Username" value="testuser123">
+                    <input type="email" id="auth-email" placeholder="Email" value="testuser123@example.com">
+                    <input type="password" id="auth-password" placeholder="Password" value="Test1234!">
+                    <button onclick="performAuthRegister()">S'inscrire</button>
+                    <button onclick="performAuthLogin()">Se connecter</button>
+                </div>
+                <div id="auth-results"></div>
+            </div>
+        </div>
+        
+        <!-- Membres -->
+        <div id="members" class="tab-content">
+            <div class="test-section">
+                <h3>Créer un Membre (Corrigé)</h3>
+                <div class="form">
+                    <input type="text" id="member-id" placeholder="ID" value="MEM001">
+                    <input type="text" id="member-firstname" placeholder="Prénom" value="Jean">
+                    <input type="text" id="member-lastname" placeholder="Nom" value="Dupont">
+                    <input type="email" id="member-email" placeholder="Email" value="jean.dupont@example.com">
+                    <input type="tel" id="member-phone" placeholder="Téléphone" value="+33612345678">
+                    <input type="date" id="member-birthdate" placeholder="Date de naissance" value="1999-01-15">
+                    <select id="member-membership-type">
+                        <option value="basic">Basic</option>
+                        <option value="premium" selected>Premium</option>
+                        <option value="vip">VIP</option>
+                    </select>
+                    <select id="member-membership-status">
+                        <option value="active" selected>Actif</option>
+                        <option value="inactive">Inactif</option>
+                        <option value="expired">Expiré</option>
+                    </select>
+                    <input type="date" id="member-join-date" placeholder="Date d'inscription" value="2024-01-15">
+                    <input type="date" id="member-expiry-date" placeholder="Date d'expiration" value="2024-12-31">
+                    <button onclick="createMember()">Créer Membre</button>
+                </div>
+                <div id="member-results"></div>
+            </div>
+        </div>
+        
+        <!-- Paiements -->
+        <div id="payments" class="tab-content">
+            <div class="test-section">
+                <h3>Créer un Paiement (Corrigé)</h3>
+                <div class="form">
+                    <input type="number" id="payment-member-id" placeholder="ID Membre" value="1">
+                    <input type="number" id="payment-amount" placeholder="Montant" value="50" step="0.01">
+                    <select id="payment-type">
+                        <option value="membership" selected>Mensualité</option>
+                        <option value="training">Entraînement</option>
+                        <option value="equipment">Équipement</option>
+                        <option value="other">Autre</option>
+                    </select>
+                    <input type="date" id="payment-date" placeholder="Date de paiement" value="2024-04-07">
+                    <select id="payment-status">
+                        <option value="paid" selected>Payé</option>
+                        <option value="pending">En attente</option>
+                        <option value="failed">Échoué</option>
+                        <option value="refunded">Remboursé</option>
+                    </select>
+                    <select id="payment-method">
+                        <option value="cash">Espèces</option>
+                        <option value="card" selected>Carte</option>
+                        <option value="bank_transfer">Virement</option>
+                        <option value="online">En ligne</option>
+                    </select>
+                    <textarea id="payment-description" placeholder="Description">Paiement mensuel Avril 2024</textarea>
+                    <button onclick="createPayment()">Créer Paiement</button>
+                </div>
+                <div id="payment-results"></div>
+            </div>
+        </div>
+        
+        <!-- Présence -->
+        <div id="attendance" class="tab-content">
+            <div class="test-section">
+                <h3>Pointage (Corrigé)</h3>
+                <div class="form">
+                    <input type="number" id="attendance-member-id" placeholder="ID Membre" value="1">
+                    <input type="date" id="attendance-date" placeholder="Date" value="2024-04-07">
+                    <button onclick="checkInMember()">Pointer Entrée</button>
+                    <button onclick="createAttendance()">Créer Présence</button>
+                </div>
+                <div id="attendance-results"></div>
+            </div>
+        </div>
+        
+        <!-- Annonces -->
+        <div id="announcements" class="tab-content">
+            <div class="test-section">
+                <h3>Créer une Annonce (Corrigé)</h3>
+                <div class="form">
+                    <input type="text" id="announcement-title" placeholder="Titre" value="Compétition de Karaté - Samedi 20 Avril">
+                    <textarea id="announcement-content" placeholder="Contenu">Une compétition interne sera organisée ce samedi. Tous les membres sont invités à participer. Horaires: 9h-17h. Lieu: Dojo principal.</textarea>
+                    <select id="announcement-type">
+                        <option value="general" selected>Général</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="event" selected>Événement</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                    <select id="announcement-priority">
+                        <option value="low">Faible</option>
+                        <option value="medium">Moyenne</option>
+                        <option value="high" selected>Haute</option>
+                    </select>
+                    <input type="date" id="announcement-date" placeholder="Date" value="2024-04-20">
+                    <input type="number" id="announcement-author-id" placeholder="ID Auteur" value="1">
+                    <button onclick="createAnnouncement()">Créer Annonce</button>
+                </div>
+                <div id="announcement-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://kung-fu-backend.onrender.com';
+        let authToken = null;
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showResult(containerId, message, isSuccess = true) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            container.appendChild(div);
+            
+            // Auto-scroll to result
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+        
+        // Health check
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${BASE_URL}/api/health`);
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('health-status');
+                if (response.ok) {
+                    statusDiv.className = 'health-status success';
+                    statusDiv.innerHTML = `<span class="status-indicator status-online"></span> Backend en ligne - ${data.status}`;
+                } else {
+                    statusDiv.className = 'health-status error';
+                    statusDiv.innerHTML = `<span class="status-indicator status-offline"></span> Backend hors ligne`;
+                }
+            } catch (error) {
+                const statusDiv = document.getElementById('health-status');
+                statusDiv.className = 'health-status error';
+                statusDiv.innerHTML = `<span class="status-indicator status-offline"></span> Erreur de connexion: ${error.message}`;
+            }
+        }
+        
+        // Authentification
+        async function performAuthRegister() {
+            clearResults('auth-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('auth-username').value,
+                        email: document.getElementById('auth-email').value,
+                        password: document.getElementById('auth-password').value,
+                        role: 'member'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('auth-results', `
+                        <p>✅ Inscription réussie!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('auth-results', `
+                        <p>❌ Échec inscription</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('auth-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        async function performAuthLogin() {
+            clearResults('auth-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('auth-username').value,
+                        password: document.getElementById('auth-password').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    showResult('auth-results', `
+                        <p>✅ Connexion réussie!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('auth-results', `
+                        <p>❌ Échec connexion</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('auth-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        // CRUD Operations
+        async function createMember() {
+            clearResults('member-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/members`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    body: JSON.stringify({
+                        id: document.getElementById('member-id').value,
+                        first_name: document.getElementById('member-firstname').value,
+                        last_name: document.getElementById('member-lastname').value,
+                        phone: document.getElementById('member-phone').value,
+                        email: document.getElementById('member-email').value,
+                        date_of_birth: document.getElementById('member-birthdate').value,
+                        membership_type: document.getElementById('member-membership-type').value,
+                        membership_status: document.getElementById('member-membership-status').value,
+                        join_date: document.getElementById('member-join-date').value,
+                        expiry_date: document.getElementById('member-expiry-date').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('member-results', `
+                        <p>✅ Membre créé avec succès!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('member-results', `
+                        <p>❌ Échec création membre</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('member-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        async function createPayment() {
+            clearResults('payment-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/payments`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    body: JSON.stringify({
+                        member_id: parseInt(document.getElementById('payment-member-id').value),
+                        amount: parseFloat(document.getElementById('payment-amount').value),
+                        payment_type: document.getElementById('payment-type').value,
+                        payment_date: document.getElementById('payment-date').value,
+                        status: document.getElementById('payment-status').value,
+                        payment_method: document.getElementById('payment-method').value,
+                        description: document.getElementById('payment-description').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('payment-results', `
+                        <p>✅ Paiement créé avec succès!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('payment-results', `
+                        <p>❌ Échec création paiement</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('payment-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        async function checkInMember() {
+            clearResults('attendance-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/attendance/checkin`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    body: JSON.stringify({
+                        member_id: parseInt(document.getElementById('attendance-member-id').value),
+                        date: document.getElementById('attendance-date').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('attendance-results', `
+                        <p>✅ Pointage réussi!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('attendance-results', `
+                        <p>❌ Échec pointage</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('attendance-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        async function createAttendance() {
+            clearResults('attendance-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/attendance`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    body: JSON.stringify({
+                        member_id: parseInt(document.getElementById('attendance-member-id').value),
+                        date: document.getElementById('attendance-date').value,
+                        check_in_time: '18:00',
+                        status: 'present'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('attendance-results', `
+                        <p>✅ Présence créée avec succès!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('attendance-results', `
+                        <p>❌ Échec création présence</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('attendance-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        async function createAnnouncement() {
+            clearResults('announcement-results');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/announcements`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById('announcement-title').value,
+                        content: document.getElementById('announcement-content').value,
+                        type: document.getElementById('announcement-type').value,
+                        priority: document.getElementById('announcement-priority').value,
+                        date: document.getElementById('announcement-date').value,
+                        author_id: parseInt(document.getElementById('announcement-author-id').value),
+                        active: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('announcement-results', `
+                        <p>✅ Annonce créée avec succès!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('announcement-results', `
+                        <p>❌ Échec création annonce</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('announcement-results', `<p>❌ Erreur: ${error.message}</p>`, false);
+            }
+        }
+        
+        // Auto-check health on load
+        window.onload = () => {
+            checkHealth();
+            // Check health every 30 seconds
+            setInterval(checkHealth, 30000);
+        };
+    </script>
+</body>
+</html>

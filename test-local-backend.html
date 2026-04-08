@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Local Backend</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form { max-width: 400px; margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .form input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+        .form button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .form button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; font-size: 12px; }
+        .tabs { display: flex; border-bottom: 1px solid #ccc; }
+        .tab { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; border-bottom: none; margin-right: 5px; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; padding: 20px; border: 1px solid #ccc; border-top: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Backend Connection</h1>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('render')">Render Backend</div>
+        <div class="tab" onclick="showTab('local')">Local Backend</div>
+        <div class="tab" onclick="showTab('test')">Test Form</div>
+    </div>
+    
+    <div id="render" class="tab-content active">
+        <h2>🌐 Render Backend Tests</h2>
+        <div class="info">
+            <p><strong>Backend URL:</strong> https://kung-fu-backend.onrender.com</p>
+            <p><strong>Status:</strong> <span id="render-status">Testing...</span></p>
+        </div>
+        
+        <button onclick="testRenderHealth()">Test Health</button>
+        <button onclick="testRenderRegister()">Test Register</button>
+        <button onclick="testRenderLogin()">Test Login</button>
+        <div id="render-results"></div>
+    </div>
+    
+    <div id="local" class="tab-content">
+        <h2>🏠 Local Backend Tests</h2>
+        <div class="info">
+            <p><strong>Backend URL:</strong> http://localhost:3001</p>
+            <p><strong>Status:</strong> <span id="local-status">Not tested</span></p>
+            <p><strong>Note:</strong> Make sure local backend is running with <code>npm start</code></p>
+        </div>
+        
+        <button onclick="testLocalHealth()">Test Health</button>
+        <button onclick="testLocalRegister()">Test Register</button>
+        <button onclick="testLocalLogin()">Test Login</button>
+        <div id="local-results"></div>
+    </div>
+    
+    <div id="test" class="tab-content">
+        <h2>📝 Registration & Login Test</h2>
+        <div class="form">
+            <h3>Register</h3>
+            <input type="text" id="reg-username" placeholder="Username" value="test">
+            <input type="email" id="reg-email" placeholder="Email" value="test@test.com">
+            <input type="password" id="reg-password" placeholder="Password" value="Test1234!">
+            <button onclick="performRegister()">Register</button>
+            <div id="register-result"></div>
+        </div>
+        
+        <div class="form">
+            <h3>Login</h3>
+            <input type="text" id="login-username" placeholder="Username" value="test">
+            <input type="password" id="login-password" placeholder="Password" value="Test1234!">
+            <button onclick="performLogin()">Login</button>
+            <div id="login-result"></div>
+        </div>
+        
+        <div class="form">
+            <h3>Backend Selection</h3>
+            <select id="backend-select">
+                <option value="render">Render Backend (https://kung-fu-backend.onrender.com)</option>
+                <option value="local">Local Backend (http://localhost:3001)</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        let currentBackend = 'render';
+        let authToken = null;
+        
+        const BACKENDS = {
+            render: 'https://kung-fu-backend.onrender.com',
+            local: 'http://localhost:3001'
+        };
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function getBackendURL() {
+            const select = document.getElementById('backend-select');
+            return select ? BACKENDS[select.value] : BACKENDS.render;
+        }
+        
+        function showResult(containerId, message, isSuccess = true) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            container.appendChild(div);
+        }
+        
+        async function testRenderHealth() {
+            const results = document.getElementById('render-results');
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch('https://kung-fu-backend.onrender.com/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('render-status').innerHTML = '✅ Online';
+                    showResult('render-results', `
+                        <p>✅ Health check successful</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    throw new Error(`Status: ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById('render-status').innerHTML = '❌ Offline';
+                showResult('render-results', `
+                    <p>❌ Health check failed: ${error.message}</p>
+                `, false);
+            }
+        }
+        
+        async function testRenderRegister() {
+            const results = document.getElementById('render-results');
+            
+            try {
+                const response = await fetch('https://kung-fu-backend.onrender.com/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'test',
+                        email: 'test@test.com',
+                        password: 'Test1234!'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('render-results', `
+                        <p>✅ Register successful (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('render-results', `
+                        <p>❌ Register failed (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('render-results', `
+                    <p>❌ Register error: ${error.message}</p>
+                `, false);
+            }
+        }
+        
+        async function testRenderLogin() {
+            const results = document.getElementById('render-results');
+            
+            try {
+                const response = await fetch('https://kung-fu-backend.onrender.com/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'test',
+                        password: 'Test1234!'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    showResult('render-results', `
+                        <p>✅ Login successful (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('render-results', `
+                        <p>❌ Login failed (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('render-results', `
+                    <p>❌ Login error: ${error.message}</p>
+                `, false);
+            }
+        }
+        
+        async function testLocalHealth() {
+            const results = document.getElementById('local-results');
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('local-status').innerHTML = '✅ Online';
+                    showResult('local-results', `
+                        <p>✅ Health check successful</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    throw new Error(`Status: ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById('local-status').innerHTML = '❌ Offline';
+                showResult('local-results', `
+                    <p>❌ Health check failed: ${error.message}</p>
+                    <p>💡 Make sure local backend is running with <code>npm start</code></p>
+                `, false);
+            }
+        }
+        
+        async function testLocalRegister() {
+            const results = document.getElementById('local-results');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'test',
+                        email: 'test@test.com',
+                        password: 'Test1234!'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('local-results', `
+                        <p>✅ Register successful (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('local-results', `
+                        <p>❌ Register failed (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('local-results', `
+                    <p>❌ Register error: ${error.message}</p>
+                `, false);
+            }
+        }
+        
+        async function testLocalLogin() {
+            const results = document.getElementById('local-results');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'test',
+                        password: 'Test1234!'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    showResult('local-results', `
+                        <p>✅ Login successful (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, true);
+                } else {
+                    showResult('local-results', `
+                        <p>❌ Login failed (Status: ${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                showResult('local-results', `
+                    <p>❌ Login error: ${error.message}</p>
+                `, false);
+            }
+        }
+        
+        async function performRegister() {
+            const backend = getBackendURL();
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const resultDiv = document.getElementById('register-result');
+            
+            try {
+                resultDiv.innerHTML = '<p>⏳ Registering...</p>';
+                const response = await fetch(`${backend}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <p>✅ Registration successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <p>❌ Registration failed</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function performLogin() {
+            const backend = getBackendURL();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const resultDiv = document.getElementById('login-result');
+            
+            try {
+                resultDiv.innerHTML = '<p>⏳ Logging in...</p>';
+                const response = await fetch(`${backend}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <p>✅ Login successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <p>❌ Login failed</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            testRenderHealth();
+        };
+    </script>
+</body>
+</html>
