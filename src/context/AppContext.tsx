@@ -21,11 +21,13 @@ interface AppContextType {
   setGallery: (gallery: GalleryItem[]) => void;
   settings: AppSettings;
   setSettings: (settings: AppSettings) => void;
+  loading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [loading, setLoading] = useState(true);
   const [members, setMembersState] = useState<Member[]>([]);
   const [payments, setPaymentsState] = useState<Payment[]>([]);
   const [attendance, setAttendanceState] = useState<Attendance[]>([]);
@@ -43,29 +45,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const loadInitialData = async () => {
     try {
+      setLoading(true);
+      
       // Load members from API
-      const membersData = await apiService.getMembers();
+      const membersData = await apiService.getMembers() || [];
       setMembersState(membersData);
 
       // Load payments from API
-      const paymentsData = await apiService.getPayments();
+      const paymentsData = await apiService.getPayments() || [];
       setPaymentsState(paymentsData);
 
       // Load attendance from API
-      const attendanceData = await apiService.getAttendance();
+      const attendanceData = await apiService.getAttendance() || [];
       setAttendanceState(attendanceData);
 
       // Load announcements from API
-      const announcementsData = await apiService.getAnnouncements();
+      const announcementsData = await apiService.getAnnouncements() || [];
       setAnnouncementsState(announcementsData);
 
       // Load recent announcements
-      const recentAdvices = await apiService.getRecentAnnouncements();
+      const recentAdvices = await apiService.getRecentAnnouncements() || [];
       setAdvicesState(recentAdvices);
 
       console.log(' Data loaded from backend API successfully');
     } catch (error) {
       console.error(' Error loading data from backend:', error);
+      
+      // Fallback to empty arrays on error
+      setMembersState([]);
+      setPaymentsState([]);
+      setAttendanceState([]);
+      setAnnouncementsState([]);
+      setAdvicesState([]);
+    } finally {
+      setLoading(false);
     }
   };
 
