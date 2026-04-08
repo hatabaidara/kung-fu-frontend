@@ -70,6 +70,16 @@ export default function AppSimple() {
           <p><strong>🔍 Check Network tab</strong> for API requests</p>
           <p><strong>⚡ Current URL:</strong> https://kung-fu-frontend.vercel.app</p>
         </div>
+        
+        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fff3cd', borderRadius: '5px' }}>
+          <h3 style={{ color: '#856404', marginBottom: '10px' }}>
+            🧪 React Loading Diagnosis
+          </h3>
+          
+          <div id="react-diagnosis" style={{ padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
+            Checking React rendering...
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -78,9 +88,11 @@ export default function AppSimple() {
 // Test API connection
 async function testAPIConnection() {
   const resultDiv = document.getElementById('api-test-result');
-  if (!resultDiv) return;  
+  const diagnosisDiv = document.getElementById('react-diagnosis');
+  if (!resultDiv || !diagnosisDiv) return;  
   try {
     resultDiv.innerHTML = '🔄 Testing API connection...';
+    diagnosisDiv.innerHTML = '🔍 Analyzing React rendering...';
     
     const apiUrl = 'https://kung-fu-backend.onrender.com/api';
     console.log('🔗 Testing API URL:', apiUrl);
@@ -99,6 +111,16 @@ async function testAPIConnection() {
           <strong>Environment:</strong> ${data.environment}
         </div>
       `;
+      
+      diagnosisDiv.innerHTML = `
+        <div style="color: #28a745; font-weight: bold; margin-bottom: 10px;">
+          ✅ Frontend-Backend Connection Working
+        </div>
+        <div style="margin-top: 10px; font-size: 12px;">
+          <strong>Next Step:</strong> Check browser console for React rendering details
+        </div>
+      `;
+      
       console.log('✅ API Response:', data);
     } else {
       resultDiv.innerHTML = `
@@ -110,6 +132,16 @@ async function testAPIConnection() {
           <strong>URL:</strong> ${apiUrl}
         </div>
       `;
+      
+      diagnosisDiv.innerHTML = `
+        <div style="color: #dc3545; font-weight: bold; margin-bottom: 10px;">
+          ❌ API Connection Failed
+        </div>
+        <div style="margin-top: 10px; font-size: 12px;">
+          <strong>Issue:</strong> Backend may be down or CORS misconfigured
+        </div>
+      `;
+      
       console.log('❌ API Error:', response.status, response.statusText);
     }
   } catch (error) {
@@ -122,6 +154,16 @@ async function testAPIConnection() {
         <strong>URL:</strong> ${apiUrl}
       </div>
     `;
+    
+    diagnosisDiv.innerHTML = `
+      <div style="color: #dc3545; font-weight: bold; margin-bottom: 10px;">
+        ❌ Network Error
+      </div>
+      <div style="margin-top: 10px; font-size: 12px;">
+        <strong>Issue:</strong> Network connectivity problems
+        </div>
+      `;
+    
     console.log('❌ Connection Error:', (error as Error).message);
   }
 }
