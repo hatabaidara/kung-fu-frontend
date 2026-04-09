@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import apiService from "../services/api";
 import { useAppContext } from "../context/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -89,43 +90,51 @@ export function Members() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.phone || !formData.email || !formData.discipline) {
       toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
-    if (editingMember) {
-      // Update existing member
-      const updatedMembers = members.map((m) =>
-        m.id === editingMember.id ? { ...formData, id: m.id, joinDate: m.joinDate } as Member : m
-      );
-      setMembers(updatedMembers);
-      toast.success("Membre modifié avec succès");
-    } else {
-      // Add new member
-      const newId = `M${String(members.length + 1).padStart(3, "0")}`;
-      const newMember: Member = {
-        ...formData,
-        id: newId,
-        joinDate: new Date().toISOString().split("T")[0],
-      } as Member;
-      setMembers([...members, newMember]);
+    const nameParts = (formData.name || "").trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || firstName;
 
-      // Créer le paiement d'inscription
-      const newPaymentId = `P${String(payments.length + 1).padStart(3, "0")}`;
-      const inscriptionPayment = {
-        id: newPaymentId,
-        memberId: newId,
-        memberName: formData.name!,
-        amount: 10000,
-        type: "Inscription" as const,
-        date: new Date().toISOString().split("T")[0],
-        status: "En attente",
-      };
-      setPayments([...payments, inscriptionPayment]);
+    const apiData = {
+      first_name: firstName,
+      last_name: lastName,
+      phone: formData.phone,
+      email: formData.email,
+      membership_type: formData.discipline,
+      membership_status: formData.active ? "active" : "inactive",
+      join_date: new Date().toISOString().split("T")[0],
+      expiry_date: formData.licenseExpiry || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
+      date_of_birth: null,
+    };
 
-      toast.success("Nouveau membre ajouté avec succès");
+    try {
+      if (editingMember) {
+        await apiService.updateMember(editingMember.id, apiData);
+        const updatedMembers = members.map((m) =>
+          m.id === editingMember.id ? { ...m, ...formData } as Member : m
+        );
+        setMembers(updatedMembers);
+        toast.success("Membre modifie avec succes");
+      } else {
+        const result = await apiService.createMember(apiData);
+        const newId = result.member?.id || `M${String(members.length + 1).padStart(3, "0")}`;
+        const newMember: Member = {
+          ...formData,
+          id: String(newId),
+          joinDate: new Date().toISOString().split("T")[0],
+          active: formData.active ?? true,
+        } as Member;
+        setMembers([...members, newMember]);
+        toast.success("Nouveau membre ajoute avec succes");
+      }
+    } catch (error: any) {
+      toast.error("Erreur: " + (error.message || "Impossible de sauvegarder"));
+      return;
     }
     setIsDialogOpen(false);
   };
@@ -559,3 +568,5 @@ export function Members() {
     </div>
   );
 }
+
+
