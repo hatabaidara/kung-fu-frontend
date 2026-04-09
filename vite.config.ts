@@ -5,39 +5,17 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [
+    // The React and Tailwind plugins are both required for Make, even if
+    // Tailwind is not being actively used - do not remove them
     react(),
     tailwindcss(),
   ],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      }
-    }
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
-      }
-    }
-  },
-  root: '.',
-  publicDir: 'public',
   resolve: {
     alias: {
       // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },
-  define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'https://kung-fu-backend.onrender.com/api')
-  },
-  base: './',
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],

@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Member, Payment, Attendance, Announcement, Advice, GalleryItem } from "../types";
 import { apiService } from "../services/api";
+import {
+  initialMembers,
+  initialPayments,
+  initialAttendance,
+  initialAnnouncements,
+  initialAdvices,
+  initialGallery,
+} from "../data/mockData";
+import { storageAPI } from "../utils/storage";
 
 interface AppSettings {
   registrationEnabled: boolean;
@@ -28,15 +37,13 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(true);
-  const [members, setMembersState] = useState<Member[]>([]);
-  const [payments, setPaymentsState] = useState<Payment[]>([]);
-  const [attendance, setAttendanceState] = useState<Attendance[]>([]);
-  const [announcements, setAnnouncementsState] = useState<Announcement[]>([]);
-  const [advices, setAdvicesState] = useState<Advice[]>([]);
-  const [gallery, setGalleryState] = useState<GalleryItem[]>([]);
-  const [settings, setSettingsState] = useState<AppSettings>(() => ({
-    registrationEnabled: true
-  }));
+  const [members, setMembersState] = useState<Member[]>(() => storageAPI.members.get(initialMembers));
+  const [payments, setPaymentsState] = useState<Payment[]>(() => storageAPI.payments.get(initialPayments));
+  const [attendance, setAttendanceState] = useState<Attendance[]>(() => storageAPI.attendance.get(initialAttendance));
+  const [announcements, setAnnouncementsState] = useState<Announcement[]>(() => storageAPI.announcements.get(initialAnnouncements));
+  const [advices, setAdvicesState] = useState<Advice[]>(() => storageAPI.advices.get(initialAdvices));
+  const [gallery, setGalleryState] = useState<GalleryItem[]>(() => storageAPI.gallery.get(initialGallery));
+  const [settings, setSettingsState] = useState<AppSettings>(() => storageAPI.settings.get({ registrationEnabled: true }));
 
   // Load data from backend API on mount
   useEffect(() => {
@@ -84,30 +91,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const setMembers = (newMembers: Member[]) => {
     setMembersState(newMembers);
+    storageAPI.members.save(newMembers);
   };
 
   const setPayments = (newPayments: Payment[]) => {
     setPaymentsState(newPayments);
+    storageAPI.payments.save(newPayments);
   };
 
   const setAttendance = (newAttendance: Attendance[]) => {
     setAttendanceState(newAttendance);
+    storageAPI.attendance.save(newAttendance);
   };
 
   const setAnnouncements = (newAnnouncements: Announcement[]) => {
     setAnnouncementsState(newAnnouncements);
+    storageAPI.announcements.save(newAnnouncements);
   };
 
   const setAdvices = (newAdvices: Advice[]) => {
     setAdvicesState(newAdvices);
+    storageAPI.advices.save(newAdvices);
   };
 
   const setGallery = (newGallery: GalleryItem[]) => {
     setGalleryState(newGallery);
+    storageAPI.gallery.save(newGallery);
   };
 
   const setSettings = (newSettings: AppSettings) => {
     setSettingsState(newSettings);
+    storageAPI.settings.save(newSettings);
   };
 
   return (
@@ -127,6 +141,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setGallery,
         settings,
         setSettings,
+        loading,
       }}
     >
       {children}

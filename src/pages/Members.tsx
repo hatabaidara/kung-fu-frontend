@@ -91,105 +91,49 @@ export function Members() {
   };
 
   const handleSave = async () => {
-    // 1. Valider les champs obligatoires
-    const requiredFields = {
-      name: formData.name?.trim(),
-      phone: formData.phone?.trim(),
-      discipline: formData.discipline?.trim()
-    };
-    
-    const missingFields = Object.entries(requiredFields)
-      .filter(([_, value]) => !value)
-      .map(([field]) => field);
-    
-    if (missingFields.length > 0) {
-      toast.error(`Champs obligatoires manquants: ${missingFields.join(', ')}`);
-      console.log('❌ Validation échouée - champs manquants:', missingFields);
+    if (!formData.name || !formData.phone || !formData.email || !formData.discipline) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
-
-    // 2. Séparer le nom complet en first_name et last_name
-    const nameParts = requiredFields.name?.split(' ').filter(part => part.length > 0) || [];
-    const first_name = nameParts[0] || '';
-    const last_name = nameParts.slice(1).join(' ') || first_name;
-
-    // 3. Construire l'objet JSON conforme au backend
+    const nameParts = (formData.name || "").trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || firstName;
     const apiData = {
-      first_name,
-      last_name,
-      phone: requiredFields.phone,
-      email: formData.email?.trim() || '',
-      membership_type: requiredFields.discipline,
-      membership_status: formData.active ? 'active' : 'inactive',
-      join_date: new Date().toISOString().split('T')[0],
-      expiry_date: formData.licenseExpiry || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      first_name: firstName,
+      last_name: lastName,
+      phone: formData.phone,
+      email: formData.email,
+      membership_type: formData.discipline,
+      membership_status: formData.active ? "active" : "inactive",
+      join_date: new Date().toISOString().split("T")[0],
+      expiry_date: formData.licenseExpiry || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
       date_of_birth: null,
     };
-
-    // 4. Logging avant appel API
-    console.log('📤 Envoi des données au backend:', {
-      isUpdate: !!editingMember,
-      memberId: editingMember?.id,
-      apiData
-    });
-
     try {
-      let response;
-      
       if (editingMember) {
-        // 4a. Mise à jour d'un membre existant
-        console.log('🔄 Mise à jour du membre:', editingMember.id);
-        response = await apiService.updateMember(editingMember.id, apiData);
-        console.log('✅ Mise à jour réussie:', response);
-        
-        // Mettre à jour l'état local
+        await apiService.updateMember(editingMember.id, apiData);
         const updatedMembers = members.map((m) =>
-          m.id === editingMember.id ? { ...m, ...formData } as Member : m
+          m.id === editingMember.id ? { ...formData, id: m.id, joinDate: m.joinDate } as Member : m
         );
         setMembers(updatedMembers);
-        toast.success('Membre modifié avec succès');
+        toast.success("Membre modifie avec succes");
       } else {
-        // 4b. Création d'un nouveau membre
-        console.log('➕ Création d\'un nouveau membre');
-        response = await apiService.createMember(apiData);
-        console.log('✅ Création réussie:', response);
-        
-        // Ajouter le nouveau membre à l'état local
-        const newId = response.member?.id || `M${String(members.length + 1).padStart(3, '0')}`;
+        const result = await apiService.createMember(apiData);
+        const newId = result.member?.id || `M${String(members.length + 1).padStart(3, "0")}`;
         const newMember: Member = {
           ...formData,
           id: String(newId),
-          joinDate: new Date().toISOString().split('T')[0],
-          active: formData.active ?? true,
+          joinDate: new Date().toISOString().split("T")[0],
         } as Member;
         setMembers([...members, newMember]);
-        toast.success('Nouveau membre ajouté avec succès');
+        toast.success("Nouveau membre ajoute avec succes");
       }
-
-      // 5. Logging après succès
-      const finalMemberId = editingMember?.id || newId;
-      console.log('🎉 Opération terminée avec succès:', {
-        memberId: finalMemberId,
-        operation: editingMember ? 'update' : 'create'
-      });
-
     } catch (error: any) {
-      // 6. Gestion robuste des erreurs
-      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la sauvegarde';
-      const errorDetails = {
-        message: errorMessage,
-        status: error.response?.status,
-        code: error.code,
-        apiData
-      };
-      
-      console.error('❌ Erreur lors de la sauvegarde:', errorDetails);
-      toast.error(`Erreur: ${errorMessage}`);
+      toast.error("Erreur: " + (error.message || "Impossible de sauvegarder"));
       return;
-    } finally {
-      // Fermer le dialogue dans tous les cas
-      setIsDialogOpen(false);
     }
+    // Fermer le dialogue dans tous les cas
+    setIsDialogOpen(false);
   };
 
   const handleDelete = () => {

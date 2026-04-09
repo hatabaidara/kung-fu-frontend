@@ -17,6 +17,9 @@ import { Badge } from "../components/ui/badge";
 import { Calendar, Users, CheckCircle, XCircle, Search, Download, TrendingUp } from "lucide-react";
 import { Attendance as AttendanceType } from "../types";
 import { toast } from "sonner";
+import { exportToCSV } from "../utils/helpers";
+import { formatDate } from "../utils/format";
+import { DISCIPLINES } from "../utils/constants";
 
 export function Attendance() {
   const { members, attendance, setAttendance } = useAppContext();
@@ -139,25 +142,15 @@ export function Attendance() {
 
   // Export en CSV
   const exportAttendance = () => {
-    const csvContent =
-      "Date,Membre ID,Nom,Discipline,Présent\n" +
-      attendance
-        .map(
-          (a) =>
-            `${a.date},${a.memberId},${a.memberName},${a.discipline},${a.present ? "Oui" : "Non"}`
-        )
-        .join("\n");
+    const csvData = attendance.map((a) => ({
+      Date: a.date,
+      "Membre ID": a.memberId,
+      Nom: a.memberName,
+      Discipline: a.discipline,
+      Présent: a.present ? "Oui" : "Non",
+    }));
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `presences-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Export réussi");
+    exportToCSV(csvData, `presences-${new Date().toISOString().split("T")[0]}`);
   };
 
   return (
@@ -247,8 +240,11 @@ export function Attendance() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toutes disciplines</SelectItem>
-                  <SelectItem value="Boxe">Boxe</SelectItem>
-                  <SelectItem value="Kung Fu">Kung Fu</SelectItem>
+                  {DISCIPLINES.map((discipline) => (
+                    <SelectItem key={discipline.value} value={discipline.value}>
+                      {discipline.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
