@@ -91,6 +91,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const setMembers = (newMembers: Member[]) => {
     setMembersState(newMembers);
+    storageAPI.members.save(newMembers);
   };
 
   const setPayments = (newPayments: Payment[]) => {
