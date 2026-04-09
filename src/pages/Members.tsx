@@ -119,14 +119,17 @@ export function Members() {
         toast.success("Membre modifie avec succes");
       } else {
         const result = await apiService.createMember(apiData);
-        const newId = result.member?.id || `M${String(members.length + 1).padStart(3, "0")}`;
-        const newMember: Member = {
-          ...formData,
-          id: String(newId),
-          joinDate: new Date().toISOString().split("T")[0],
-        } as Member;
-        setMembers([...members, newMember]);
         toast.success("Nouveau membre ajoute avec succes");
+        
+        // Recharger les membres depuis l'API après création réussie
+        try {
+          const updatedMembers = await apiService.getMembers();
+          if (updatedMembers) {
+            setMembers(updatedMembers);
+          }
+        } catch (error) {
+          console.error('Erreur lors du rechargement des membres:', error);
+        }
       }
     } catch (error: any) {
       toast.error("Erreur: " + (error.message || "Impossible de sauvegarder"));

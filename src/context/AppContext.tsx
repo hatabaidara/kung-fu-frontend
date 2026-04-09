@@ -55,15 +55,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setLoading(true);
       
       // Load members from API
-      const membersData = await apiService.getMembers() || [];
+      const membersData = await apiService.getMembers() || [];        
       setMembersState(membersData);
 
       // Load payments from API
-      const paymentsData = await apiService.getPayments() || [];
+      const paymentsData = await apiService.getPayments() || [];      
       setPaymentsState(paymentsData);
 
       // Load attendance from API
-      const attendanceData = await apiService.getAttendance() || [];
+      const attendanceData = await apiService.getAttendance() || [];  
       setAttendanceState(attendanceData);
 
       // Load announcements from API
@@ -74,12 +74,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const recentAdvices = await apiService.getRecentAnnouncements() || [];
       setAdvicesState(recentAdvices);
 
-      console.log(' Data loaded from backend API successfully');
+      console.log(' Data loaded from backend API successfully');      
     } catch (error) {
-      console.error(' Error loading data from backend:', error);
-      
-      // Fallback to empty arrays on error
-      setMembersState([]);
+      console.error(' Error loading data from backend:', error);      
+
+      // Fallback to empty arrays on error (except for members - keep localStorage)
+      setMembersState(storageAPI.members.get(initialMembers));
       setPaymentsState([]);
       setAttendanceState([]);
       setAnnouncementsState([]);
@@ -91,12 +91,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const setMembers = (newMembers: Member[]) => {
     setMembersState(newMembers);
-    storageAPI.members.save(newMembers);
   };
 
   const setPayments = (newPayments: Payment[]) => {
     setPaymentsState(newPayments);
-    storageAPI.payments.save(newPayments);
   };
 
   const setAttendance = (newAttendance: Attendance[]) => {
