@@ -2,7 +2,7 @@
 console.log('=== API CONNECTIVITY TEST ===');
 
 // Test 1: Check if VITE_API_URL is available
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = import.meta.env.VITE_API_URL || 'https://VOTRE-BACKEND.railway.app/api';
 console.log('VITE_API_URL from environment:', apiUrl);
 
 // Test 2: Test health endpoint

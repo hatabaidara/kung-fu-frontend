@@ -1,10 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kung-fu-backend.onrender.com/api';
+const API_BASE_URL = (import.meta as any).env.VITE_API_URL || 'https://VOTRE-BACKEND.railway.app/api';
 
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     
-    const defaultHeaders = {
+    const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
